@@ -41,10 +41,9 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
     protected Map<String, String> configs;
 
     public static void main(String[] args){
-        if(args.length < 1) {
-            System.out.println("Use: java Sequencer");
-            System.exit(-1);
-        }
+
+    	loadConfig("", "");
+
         EventLoopGroup group = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
