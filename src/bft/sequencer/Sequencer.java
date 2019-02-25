@@ -27,10 +27,18 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.internal.SocketUtils;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>  {
 
     String multicastAddress;
     int multicastPort;
+    protected static int myPort;
+    protected Map<String, String> configs;
 
     public static void main(String[] args){
         if(args.length < 1) {
@@ -43,8 +51,6 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
             b.group(group)
              .channel(NioDatagramChannel.class);
 
-            int myPort = 4096;
-
             ChannelFuture f = b.bind(myPort).sync();
 
         } catch (InterruptedException ex) {
@@ -56,6 +62,41 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
     @Override
     public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
         ctx.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(packet.content()), SocketUtils.socketAddress(multicastAddress, multicastPort)));
+    }
+
+    private void loadConfig(String configHome, String fileName){
+        try{
+            String path =  "";
+            String sep = System.getProperty("file.separator");
+            if(configHome.equals("")){
+                   if (fileName.equals(""))
+                        path = "config"+sep+"hosts.config";
+                   else
+                        path = "config"+sep+fileName;
+            }else{
+                   if (fileName.equals(""))
+                        path = configHome+sep+"hosts.config";
+                   else
+                       path = configHome+sep+fileName;
+            }
+            FileReader fr = new FileReader(path);
+            BufferedReader rd = new BufferedReader(fr);
+            String line = null;
+            while((line = rd.readLine()) != null){
+                if(!line.startsWith("#")){
+                    StringTokenizer str = new StringTokenizer(line," ");
+                    if (str.nextToken() == "groupaddr") {
+                        multicastAddress = str.nextToken();
+                        multicastPort = Integer.valueOf(str.nextToken());
+                    } else if(str.nextToken() == "sequencerport"){
+                        myPort = Integer.valueOf(str.nextToken());
+                    }
+                }
+            }
+            fr.close();
+            rd.close();
+        }catch(Exception e){
+        }
     }
 
 }
