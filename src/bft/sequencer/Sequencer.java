@@ -25,6 +25,7 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.buffer.Unpooled;
 import io.netty.util.internal.SocketUtils;
+import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
 import java.io.BufferedReader;
@@ -33,11 +34,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>  {
+public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket> {
 
-    String multicastAddress;
-    int multicastPort;
-    protected static int myPort;
+	InetSocketAddress multicast;
+    protected static int port;
     protected Map<String, String> configs;
 
     public static void main(String[] args){
@@ -51,7 +51,7 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
             b.group(group)
              .channel(NioDatagramChannel.class);
 
-            ChannelFuture f = b.bind(myPort).sync();
+            ChannelFuture f = b.bind(port).sync();
 
         } catch (InterruptedException ex) {
         } finally {
@@ -61,7 +61,7 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-        ctx.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(packet.content()), SocketUtils.socketAddress(multicastAddress, multicastPort)));
+        ctx.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(packet.content()), multicast));
     }
 
     private void loadConfig(String configHome, String fileName){
@@ -86,10 +86,9 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
                 if(!line.startsWith("#")){
                     StringTokenizer str = new StringTokenizer(line," ");
                     if (str.nextToken() == "groupaddr") {
-                        multicastAddress = str.nextToken();
-                        multicastPort = Integer.valueOf(str.nextToken());
+                        multicast = SocketUtils.socketAddress(str.nextToken(), Integer.valueOf(str.nextToken()));
                     } else if(str.nextToken() == "sequencerport"){
-                        myPort = Integer.valueOf(str.nextToken());
+                        port = Integer.valueOf(str.nextToken());
                     }
                 }
             }
