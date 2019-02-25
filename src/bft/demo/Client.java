@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -27,6 +28,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.internal.SocketUtils;
 import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.buffer.ByteBuf;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -34,34 +36,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket> {
+public class Client {
 
-	static InetSocketAddress multicast;
-    protected static int port;
-    protected Map<String, String> configs;
+	static InetSocketAddress sequencer;
 
-    public static void main(String[] args){
+	public static void main(String[] args) {
 
-    	loadConfig("", "");
+		loadConfig("", "");
 
-        EventLoopGroup group = new NioEventLoopGroup();
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(group)
-             .channel(NioDatagramChannel.class);
+		try {
+			int numberOfOps = (args.length > 2) ? Integer.parseInt(args[2]) : 1000;
+			int dataSize = Integer.parseInt(args[1]);
 
-            ChannelFuture f = b.bind(port).sync();
+			ByteBuf buf = Unpooled.buffer(dataSize);
 
-        } catch (InterruptedException ex) {
-        } finally {
-            group.shutdownGracefully();
-        }
-    }
+			EventLoopGroup group = new NioEventLoopGroup();
+			Bootstrap b = new Bootstrap();
+			b.group(group)
+			 .channel(NioDatagramChannel.class);
 
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-        ctx.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(packet.content()), multicast));
-    }
+			Channel ch = b.bind(0).sync().channel();
+
+			for (int i = 0; i < numberOfOps; i++) {
+				ch.writeAndFlush(new DatagramPacket(buf, sequencer)).sync();
+			}
+		} catch(InterruptedException ex) {
+			
+		}
+	}
 
     private static void loadConfig(String configHome, String fileName){
         try{
@@ -84,10 +86,8 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
             while((line = rd.readLine()) != null){
                 if(!line.startsWith("#")){
                     StringTokenizer str = new StringTokenizer(line," ");
-                    if (str.nextToken() == "groupaddr") {
-                        multicast = SocketUtils.socketAddress(str.nextToken(), Integer.valueOf(str.nextToken()));
-                    } else if(str.nextToken() == "listenport"){
-                        port = Integer.valueOf(str.nextToken());
+                    if (str.nextToken() == "sequenceraddr") {
+                        sequencer = SocketUtils.socketAddress(str.nextToken(), Integer.valueOf(str.nextToken()));
                     }
                 }
             }
