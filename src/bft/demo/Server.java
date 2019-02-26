@@ -28,6 +28,7 @@ import io.netty.util.internal.SocketUtils;
 import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.buffer.CompositeByteBuf;
+import io.netty.channel.ChannelOption;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -35,27 +36,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket> {
+import java.net.*;
 
-	static InetSocketAddress multicast;
-    protected static int sequencerPort;
+public final class Server extends SimpleChannelInboundHandler<DatagramPacket> {
+
     protected Map<String, String> configs;
-    static CompositeByteBuf sequenceBuf;
-    static int sequnceNum;
+    static InetAddress multicastAddr;
+    static int multicastPort;
 
     public static void main(String[] args){
-        sequenceBuf = Unpooled.compositeBuffer();
-        sequnceNum = 0;
-
-    	loadConfig("", "");
+        loadConfig("", "");
 
         EventLoopGroup group = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
             b.group(group)
-             .channel(NioDatagramChannel.class);
+             .channel(NioDatagramChannel.class)
+             .option(ChannelOption.SO_REUSEADDR, true);
 
-            ChannelFuture f = b.bind(sequencerPort).sync();
+
+            NioDatagramChannel chan = (NioDatagramChannel)b.bind(multicastPort).sync().channel();
+            chan.joinGroup(multicastAddr).sync();
 
         } catch (InterruptedException ex) {
         } finally {
@@ -65,8 +66,7 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-        sequenceBuf.setInt(0, sequnceNum++);
-        ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
+
     }
 
     private static void loadConfig(String configHome, String fileName){
@@ -91,9 +91,8 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
                 if(!line.startsWith("#")){
                     StringTokenizer str = new StringTokenizer(line," ");
                     if (str.nextToken() == "groupaddr") {
-                        multicast = SocketUtils.socketAddress(str.nextToken(), Integer.valueOf(str.nextToken()));
-                    } else if(str.nextToken() == "listenport"){
-                        sequencerPort = Integer.valueOf(str.nextToken());
+                        multicastAddr = InetAddress.getByName(str.nextToken());
+                        multicastPort = Integer.valueOf(str.nextToken());   
                     }
                 }
             }
