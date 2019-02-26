@@ -27,6 +27,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.internal.SocketUtils;
 import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.buffer.CompositeByteBuf;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -39,8 +40,12 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
 	static InetSocketAddress multicast;
     protected static int port;
     protected Map<String, String> configs;
+    static CompositeByteBuf sequenceBuf;
+    static int sequnceNum;
 
     public static void main(String[] args){
+        sequenceBuf = Unpooled.compositeBuffer();
+        sequnceNum = 0;
 
     	loadConfig("", "");
 
@@ -60,7 +65,8 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-        ctx.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(packet.content()), multicast));
+        sequenceBuf.setInt(0, sequnceNum++);
+        ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
     }
 
     private static void loadConfig(String configHome, String fileName){
