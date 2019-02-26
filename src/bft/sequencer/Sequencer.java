@@ -37,17 +37,25 @@ import java.util.StringTokenizer;
 
 public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket> {
 
-	static InetSocketAddress multicast;
-    protected static int sequencerPort;
-    protected Map<String, String> configs;
-    static CompositeByteBuf sequenceBuf;
-    static int sequnceNum;
+	private InetSocketAddress multicast;
+    private int sequencerPort;
+    private Map<String, String> configs;
+    private CompositeByteBuf sequenceBuf;
+    private int sequnceNum;
+
+    private String configHome = "";
 
     public static void main(String[] args){
+        new Sequencer().go();
+    }
+
+    public void go() {
         sequenceBuf = Unpooled.compositeBuffer();
         sequnceNum = 0;
 
-    	loadConfig("", "");
+        loadConfig();
+        String s  = configs.remove("system.multicast");
+        multicast = SocketUtils.socketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1]));
 
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -55,7 +63,7 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
             b.group(group)
              .channel(NioDatagramChannel.class);
 
-            ChannelFuture f = b.bind(sequencerPort).sync();
+            ChannelFuture f = b.bind(Integer.valueOf(configs.remove("system.sequencer").split(":")[1])).sync();
 
         } catch (InterruptedException ex) {
         } finally {
@@ -69,31 +77,22 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
         ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
     }
 
-    private static void loadConfig(String configHome, String fileName){
+    private void loadConfig(){
+        configs = new HashMap<>();
         try{
-            String path =  "";
-            String sep = System.getProperty("file.separator");
-            if(configHome.equals("")){
-                   if (fileName.equals(""))
-                        path = "config"+sep+"hosts.config";
-                   else
-                        path = "config"+sep+fileName;
-            }else{
-                   if (fileName.equals(""))
-                        path = configHome+sep+"hosts.config";
-                   else
-                       path = configHome+sep+fileName;
+            if(configHome == null || configHome.equals("")){
+                configHome="config";
             }
+            String sep = System.getProperty("file.separator");
+            String path =  configHome+sep+"system.config";;
             FileReader fr = new FileReader(path);
             BufferedReader rd = new BufferedReader(fr);
             String line = null;
             while((line = rd.readLine()) != null){
                 if(!line.startsWith("#")){
-                    StringTokenizer str = new StringTokenizer(line," ");
-                    if (str.nextToken() == "groupaddr") {
-                        multicast = SocketUtils.socketAddress(str.nextToken(), Integer.valueOf(str.nextToken()));
-                    } else if(str.nextToken() == "listenport"){
-                        sequencerPort = Integer.valueOf(str.nextToken());
+                    StringTokenizer str = new StringTokenizer(line,"=");
+                    if(str.countTokens() > 1){
+                        configs.put(str.nextToken().trim(),str.nextToken().trim());
                     }
                 }
             }

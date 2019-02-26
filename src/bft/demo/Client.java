@@ -37,17 +37,27 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class Client {
+    
+    static int numberOfOps;
+    static int dataSize;
 
-	static InetSocketAddress sequencer;
+    private Map<String, String> configs;
+    private String configHome = "";
 
 	public static void main(String[] args) {
+        numberOfOps = (args.length > 2) ? Integer.parseInt(args[2]) : 1000;
+        dataSize = Integer.parseInt(args[1]);
+        new Client().go();
+    }
 
-		loadConfig("", "");
+    public void go() {
+		
+        loadConfig();
+
+        String s  = configs.remove("system.sequencer");
+        InetSocketAddress sequencer = SocketUtils.socketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1]));     
 
 		try {
-			int numberOfOps = (args.length > 2) ? Integer.parseInt(args[2]) : 1000;
-			int dataSize = Integer.parseInt(args[1]);
-
 			ByteBuf buf = Unpooled.buffer(dataSize);
 
 			EventLoopGroup group = new NioEventLoopGroup();
@@ -65,29 +75,22 @@ public class Client {
 		}
 	}
 
-    private static void loadConfig(String configHome, String fileName){
+    private void loadConfig(){
+        configs = new HashMap<>();
         try{
-            String path =  "";
-            String sep = System.getProperty("file.separator");
-            if(configHome.equals("")){
-                   if (fileName.equals(""))
-                        path = "config"+sep+"hosts.config";
-                   else
-                        path = "config"+sep+fileName;
-            }else{
-                   if (fileName.equals(""))
-                        path = configHome+sep+"hosts.config";
-                   else
-                       path = configHome+sep+fileName;
+            if(configHome == null || configHome.equals("")){
+                configHome="config";
             }
+            String sep = System.getProperty("file.separator");
+            String path =  configHome+sep+"system.config";;
             FileReader fr = new FileReader(path);
             BufferedReader rd = new BufferedReader(fr);
             String line = null;
             while((line = rd.readLine()) != null){
                 if(!line.startsWith("#")){
-                    StringTokenizer str = new StringTokenizer(line," ");
-                    if (str.nextToken() == "sequenceraddr") {
-                        sequencer = SocketUtils.socketAddress(str.nextToken(), Integer.valueOf(str.nextToken()));
+                    StringTokenizer str = new StringTokenizer(line,"=");
+                    if(str.countTokens() > 1){
+                        configs.put(str.nextToken().trim(),str.nextToken().trim());
                     }
                 }
             }
