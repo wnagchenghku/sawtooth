@@ -53,21 +53,23 @@ public class Client {
 		
         loadConfig();
 
+        byte[] data = new byte[dataSize];
         String s  = configs.remove("system.sequencer");
         InetSocketAddress sequencer = SocketUtils.socketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1]));     
 
 		try {
-			ByteBuf buf = Unpooled.buffer(dataSize);
-
 			EventLoopGroup group = new NioEventLoopGroup();
 			Bootstrap b = new Bootstrap();
 			b.group(group)
-			 .channel(NioDatagramChannel.class)
+             .channel(NioDatagramChannel.class)
              .handler(new ClientHandler());
+
 
 			Channel ch = b.bind(0).sync().channel();
 
+            ByteBuf buf = Unpooled.copiedBuffer(data);
 			for (int i = 0; i < numberOfOps; i++) {
+                buf.retain();
 				ch.writeAndFlush(new DatagramPacket(buf, sequencer)).sync();
 			}
 		} catch(InterruptedException ex) {

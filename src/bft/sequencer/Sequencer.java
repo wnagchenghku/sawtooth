@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.buffer.CompositeByteBuf;
+import io.netty.buffer.ByteBuf;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -41,7 +42,7 @@ public final class Sequencer {
 
 	private InetSocketAddress multicast;
     private Map<String, String> configs;
-    private CompositeByteBuf sequenceBuf;
+    private ByteBuf sequenceBuf;
     private int sequnceNum;
 
     private String configHome = "";
@@ -51,7 +52,7 @@ public final class Sequencer {
     }
 
     public void go() {
-        sequenceBuf = Unpooled.compositeBuffer();
+        sequenceBuf = Unpooled.buffer();
         sequnceNum = 0;
 
         loadConfig();
@@ -102,6 +103,8 @@ public final class Sequencer {
     private class SequencerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         @Override
         public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
+            sequenceBuf.retain();
+            packet.retain();
             sequenceBuf.setInt(0, sequnceNum++);
             ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
         }
