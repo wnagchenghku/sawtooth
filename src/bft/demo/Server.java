@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 import java.net.*;
 
-public final class Server extends SimpleChannelInboundHandler<DatagramPacket> {
+public final class Server {
 
     protected Map<String, String> configs;
     private String configHome = "";
@@ -58,6 +58,7 @@ public final class Server extends SimpleChannelInboundHandler<DatagramPacket> {
             Bootstrap b = new Bootstrap();
             b.group(group)
              .channel(NioDatagramChannel.class)
+             .handler(new ServerHandler())
              .option(ChannelOption.SO_REUSEADDR, true);
 
             NioDatagramChannel channel = (NioDatagramChannel)b.bind(Integer.valueOf(s.split(":")[1])).sync().channel();
@@ -69,9 +70,11 @@ public final class Server extends SimpleChannelInboundHandler<DatagramPacket> {
         }
     }
 
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
+    private class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
+        @Override
+        public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
 
+        }
     }
 
     private void loadConfig(){

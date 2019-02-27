@@ -39,15 +39,13 @@ import java.util.StringTokenizer;
 
 public class Client {
     
-    static int numberOfOps;
-    static int dataSize;
+    static int numberOfOps = 1000;
+    static int dataSize = 100;
 
     private Map<String, String> configs;
     private String configHome = "";
 
 	public static void main(String[] args) {
-        numberOfOps = (args.length > 2) ? Integer.parseInt(args[2]) : 1000;
-        dataSize = Integer.parseInt(args[1]);
         new Client().go();
     }
 
@@ -64,7 +62,8 @@ public class Client {
 			EventLoopGroup group = new NioEventLoopGroup();
 			Bootstrap b = new Bootstrap();
 			b.group(group)
-			 .channel(NioDatagramChannel.class);
+			 .channel(NioDatagramChannel.class)
+             .handler(new ClientHandler());
 
 			Channel ch = b.bind(0).sync().channel();
 
@@ -75,6 +74,12 @@ public class Client {
 			
 		}
 	}
+
+    private class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
+        @Override
+        public void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
+        }
+    }
 
     private void loadConfig(){
         configs = new HashMap<>();
