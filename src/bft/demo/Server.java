@@ -62,9 +62,9 @@ public final class Server {
              .option(ChannelOption.SO_REUSEADDR, true);
 
             NioDatagramChannel channel = (NioDatagramChannel)b.bind(Integer.valueOf(s.split(":")[1])).sync().channel();
-            channel.joinGroup(InetAddress.getByName(s.split(":")[0])).sync();
+            channel.joinGroup(new InetSocketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1])), NetworkInterface.getByName("eno1")).sync();
 
-        } catch (InterruptedException | UnknownHostException ex) {
+        } catch (InterruptedException | SocketException ex) {
         } finally {
             group.shutdownGracefully();
         }
