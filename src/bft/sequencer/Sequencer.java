@@ -106,7 +106,7 @@ public final class Sequencer {
             sequenceBuf.retain();
             packet.retain();
             sequenceBuf.setInt(0, sequnceNum++);
-            ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
+            ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(true, sequenceBuf, packet.content()), multicast));
         }
     }
 

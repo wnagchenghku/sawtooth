@@ -74,7 +74,7 @@ public final class Server {
     private class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         @Override
         public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-        	System.out.println(packet.content().toString(CharsetUtil.UTF_8));
+        	System.out.println(System.nanoTime());
         }
     }
 
