@@ -63,8 +63,9 @@ public final class Server {
 
             NioDatagramChannel channel = (NioDatagramChannel)b.bind(Integer.valueOf(s.split(":")[1])).sync().channel();
             channel.joinGroup(new InetSocketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1])), NetworkInterface.getByName("eno1")).sync();
-
+            channel.closeFuture().await();
         } catch (InterruptedException | SocketException ex) {
+        	ex.printStackTrace();
         } finally {
             group.shutdownGracefully();
         }
