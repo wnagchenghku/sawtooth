@@ -28,8 +28,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.internal.SocketUtils;
 import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelOption;
+import io.netty.util.CharsetUtil;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -73,7 +73,7 @@ public final class Server {
     private class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         @Override
         public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-
+        	System.out.println(packet.content().toString(CharsetUtil.UTF_8));
         }
     }
 
