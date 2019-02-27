@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.internal.SocketUtils;
 import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.buffer.CompositeByteBuf;
 
 import java.io.BufferedReader;
@@ -36,10 +37,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket> {
+public final class Sequencer {
 
 	private InetSocketAddress multicast;
-    private int sequencerPort;
     private Map<String, String> configs;
     private CompositeByteBuf sequenceBuf;
     private int sequnceNum;
@@ -62,7 +62,8 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
         try {
             Bootstrap b = new Bootstrap();
             b.group(group)
-             .channel(NioDatagramChannel.class);
+             .channel(NioDatagramChannel.class)
+             .handler(new SequencerHandler());
 
             ChannelFuture f = b.bind(Integer.valueOf(configs.remove("system.sequencer").split(":")[1])).sync();
 
@@ -70,12 +71,6 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
         } finally {
             group.shutdownGracefully();
         }
-    }
-
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-        sequenceBuf.setInt(0, sequnceNum++);
-        ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
     }
 
     private void loadConfig(){
@@ -100,6 +95,14 @@ public final class Sequencer extends SimpleChannelInboundHandler<DatagramPacket>
             fr.close();
             rd.close();
         }catch(Exception e){
+        }
+    }
+
+    private class SequencerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
+        @Override
+        public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
+            sequenceBuf.setInt(0, sequnceNum++);
+            ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(sequenceBuf, packet.content()), multicast));
         }
     }
 
