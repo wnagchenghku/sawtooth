@@ -67,6 +67,7 @@ public final class Sequencer {
 
             ChannelFuture f = b.bind(Integer.valueOf(configs.remove("system.sequencer").split(":")[1])).sync();
 
+            f.channel().closeFuture().await();
         } catch (InterruptedException ex) {
         } finally {
             group.shutdownGracefully();
