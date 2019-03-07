@@ -100,7 +100,11 @@ public class ServerConnection {
                 logger.error("Error creating connection to "+remoteId,ex);
             }
         }
-        
+
+               
+       //******* EDUARDO BEGIN **************//
+
+        new ReceiverThread().start();
         //******* EDUARDO END **************//
     }
     
@@ -235,6 +239,27 @@ public class ServerConnection {
             }
             
             reconnect(null);
+        }
+    }
+
+    /**
+     * Thread used to receive packets from the remote server.
+     */
+    protected class ReceiverThread extends Thread {
+
+        public ReceiverThread() {
+            super("Receiver for " + remoteId);
+        }
+
+        @Override
+        public void run() {
+
+            while (doWork) {
+                if (socket != null && socketInStream != null) {
+                } else {
+                    waitAndConnect();
+                }
+            }
         }
     }
 }
