@@ -16,6 +16,19 @@
  */
 package bft.tom;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+import bft.communication.ServerCommunicationSystem;
+import bft.reconfiguration.ServerViewController;
+
+import java.security.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ServiceReplica {
     
     // replica ID
@@ -38,11 +51,10 @@ public class ServiceReplica {
      *
      * @param id Replica ID
      * @param configHome Configuration directory for BFT-SMART
-     * @param loader Used to load signature keys from disk
      */
-    public ServiceReplica(int id, String configHome, KeyLoader loader) {
+    public ServiceReplica(int id, String configHome) {
         this.id = id;
-        this.SVController = new ServerViewController(id, configHome, loader);
+        this.SVController = new ServerViewController(id, configHome);
         this.init();
     }
 

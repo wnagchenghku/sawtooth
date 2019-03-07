@@ -18,7 +18,6 @@ package bft.communication.client;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -42,16 +41,11 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javax.crypto.Mac;
-
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import bftsmart.communication.client.CommunicationSystemServerSide;
-import bftsmart.communication.client.RequestReceiver;
-import bftsmart.reconfiguration.ServerViewController;
-import bftsmart.tom.core.messages.TOMMessage;
-import bftsmart.tom.util.TOMUtil;
+import bft.communication.client.CommunicationSystemServerSide;
+import bft.reconfiguration.ServerViewController;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
@@ -61,20 +55,15 @@ import java.util.logging.Level;
  * @author Paulo
  */
 @Sharable
-public class ClientServerCommunicationSystemServerSide extends SimpleChannelInboundHandler<TOMMessage> implements CommunicationSystemServerSide {
+public class ClientServerCommunicationSystemServerSide extends SimpleChannelInboundHandler<DatagramPacket> implements CommunicationSystemServerSide {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private RequestReceiver requestReceiver;
     private HashMap sessionTable;
     private ReentrantReadWriteLock rl;
     private ServerViewController controller;
     private boolean closed = false;
     private Channel mainChannel;
-
-    // This locked seems to introduce a bottleneck and seems useless, but I cannot recall why I added it
-    //private ReentrantLock sendLock = new ReentrantLock();
-    private NettyServerPipelineFactory serverPipelineFactory;
         
 	public ClientServerCommunicationSystemServerSide(ServerViewController controller) {
 		try {
@@ -83,30 +72,13 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
 			sessionTable = new HashMap();
 			rl = new ReentrantReadWriteLock();
 
-			//Configure the server.
-			Mac macDummy = TOMUtil.getMacFactory();
-
-			serverPipelineFactory = new NettyServerPipelineFactory(this, sessionTable, controller, rl);
-
-			EventLoopGroup bossGroup = new NioEventLoopGroup();
-                        
-                        //If the numbers of workers are not specified by the configuration file,
-                        //the event group is created with the default number of threads, which
-                        //should be twice the number of cores available.
-                        int nWorkers = this.controller.getStaticConf().getNumNettyWorkers();
-			EventLoopGroup workerGroup = (nWorkers > 0 ? new NioEventLoopGroup(nWorkers) : new NioEventLoopGroup());
-
-			ServerBootstrap b = new ServerBootstrap(); 
-			b.group(bossGroup, workerGroup)
-			.channel(NioServerSocketChannel.class) 
-			.childHandler(new ChannelInitializer<SocketChannel>() {
-				@Override
-				public void initChannel(SocketChannel ch) throws Exception {
-					ch.pipeline().addLast(serverPipelineFactory.getDecoder());
-					ch.pipeline().addLast(serverPipelineFactory.getEncoder());
-					ch.pipeline().addLast(serverPipelineFactory.getHandler());
-				}
-			})	.childOption(ChannelOption.SO_KEEPALIVE, true).childOption(ChannelOption.TCP_NODELAY, true);
+            EventLoopGroup group = new NioEventLoopGroup();
+            
+            Bootstrap b = new Bootstrap();
+            b.group(group)
+             .channel(NioDatagramChannel.class)
+             .option(ChannelOption.SO_BROADCAST, true)
+             .handler(new ServerHandler());
 
                         String myAddress;
                         String confAddress =
@@ -137,23 +109,17 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
                         
                         int myPort = controller.getStaticConf().getPort(controller.getStaticConf().getProcessId());
 
-			ChannelFuture f = b.bind(new InetSocketAddress(myAddress, myPort)).sync(); 
-
-			logger.info("ID = " + controller.getStaticConf().getProcessId());
-			logger.info("N = " + controller.getCurrentViewN());
-			logger.info("F = " + controller.getCurrentViewF());
-        		logger.info("Port = " + controller.getStaticConf().getPort(controller.getStaticConf().getProcessId()));
-			logger.info("requestTimeout = " + controller.getStaticConf().getRequestTimeout());
-			logger.info("maxBatch = " + controller.getStaticConf().getMaxBatchSize());
-			if (controller.getStaticConf().getUseMACs() == 1) logger.info("Using MACs");
-			if(controller.getStaticConf().getUseSignatures() == 1) logger.info("Using Signatures");
-                        logger.info("Binded replica to IP address " + myAddress);
-                        //******* EDUARDO END **************//
+			ChannelFuture f = b.bind(new InetSocketAddress(myAddress, myPort)).sync();
                         
                         mainChannel = f.channel();
 
-		} catch (NoSuchAlgorithmException | InterruptedException | UnknownHostException ex) {
+		} catch (InterruptedException | UnknownHostException ex) {
 			logger.error("Failed to create Netty communication system",ex);
 		}
 	}
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
+    }
+
 }

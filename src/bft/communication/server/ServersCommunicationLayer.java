@@ -15,6 +15,36 @@ limitations under the License.
 */
 package bft.communication.server;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import bft.reconfiguration.ServerViewController;
+import bft.tom.ServiceReplica;
+import java.net.InetAddress;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Random;
+
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ServersCommunicationLayer extends Thread {
     
     private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -30,8 +60,6 @@ public class ServersCommunicationLayer extends Thread {
     private ReentrantLock waitViewLock = new ReentrantLock();
     private List<PendingConnection> pendingConn = new LinkedList<PendingConnection>();
     private ServiceReplica replica;
-    private SecretKey selfPwd;
-    private static final String PASSWORD = "commsyst";
 
     public ServersCommunicationLayer(ServerViewController controller,
             LinkedBlockingQueue<SystemMessage> inQueue, ServiceReplica replica) throws Exception {
@@ -85,10 +113,6 @@ public class ServersCommunicationLayer extends Thread {
         /*serverSocket = new ServerSocket(controller.getStaticConf().getServerToServerPort(
                 controller.getStaticConf().getProcessId()));*/
 
-        SecretKeyFactory fac = TOMUtil.getSecretFactory();
-        PBEKeySpec spec = TOMUtil.generateKeySpec(PASSWORD.toCharArray());
-        selfPwd = fac.generateSecret(spec);
-
         serverSocket.setSoTimeout(10000);
         serverSocket.setReuseAddress(true);
 
@@ -108,8 +132,7 @@ public class ServersCommunicationLayer extends Thread {
                 int remoteId = new DataInputStream(newSocket.getInputStream()).readInt();
 
                 //******* EDUARDO BEGIN **************//
-                if (!this.controller.isInCurrentView() &&
-                     (this.controller.getStaticConf().getTTPId() != remoteId)) {
+                if (!this.controller.isInCurrentView()) {
                     waitViewLock.lock();
                     pendingConn.add(new PendingConnection(newSocket, remoteId));
                     waitViewLock.unlock();
@@ -137,7 +160,7 @@ public class ServersCommunicationLayer extends Thread {
 
     //******* EDUARDO BEGIN **************//
     private void establishConnection(Socket newSocket, int remoteId) throws IOException {
-        if ((this.controller.getStaticConf().getTTPId() == remoteId) || this.controller.isCurrentViewMember(remoteId)) {
+        if (this.controller.isCurrentViewMember(remoteId)) {
             connectionsLock.lock();
             //System.out.println("Vai se conectar com: "+remoteId);
             if (this.connections.get(remoteId) == null) { //This must never happen!!!
@@ -165,4 +188,21 @@ public class ServersCommunicationLayer extends Thread {
             LoggerFactory.getLogger(ServersCommunicationLayer.class).error("Failed to set TCPNODELAY", ex);
         }
     }
+
+    //******* EDUARDO BEGIN: List entry that stores pending connections,
+    // as a server may accept connections only after learning the current view,
+    // i.e., after receiving the response to the join*************//
+    // This is for avoiding that the server accepts connectsion from everywhere
+    public class PendingConnection {
+
+        public Socket s;
+        public int remoteId;
+
+        public PendingConnection(Socket s, int remoteId) {
+            this.s = s;
+            this.remoteId = remoteId;
+        }
+    }
+
+    //******* EDUARDO END **************//
 }

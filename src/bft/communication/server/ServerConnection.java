@@ -34,11 +34,9 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import bftsmart.communication.SystemMessage;
-import bftsmart.reconfiguration.ServerViewController;
-import bftsmart.reconfiguration.VMMessage;
-import bftsmart.tom.ServiceReplica;
-import bftsmart.tom.util.TOMUtil;
+import bft.communication.SystemMessage;
+import bft.reconfiguration.ServerViewController;
+import bft.tom.ServiceReplica;
 import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -67,18 +65,11 @@ public class ServerConnection {
     private DataOutputStream socketOutStream = null;
     private DataInputStream socketInStream = null;
     private int remoteId;
-    private boolean useSenderThread;
     protected LinkedBlockingQueue<byte[]> outQueue;// = new LinkedBlockingQueue<byte[]>(SEND_QUEUE_SIZE);
     private HashSet<Integer> noMACs = null; // this is used to keep track of data to be sent without a MAC.
                                             // It uses the reference id for that same data
     private LinkedBlockingQueue<SystemMessage> inQueue;
-    private SecretKey authKey = null;
-    private Mac macSend;
-    private Mac macReceive;
-    private int macSize;
     private Lock connectLock = new ReentrantLock();
-    /** Only used when there is no sender Thread */
-    private Lock sendLock;
     private boolean doWork = true;
 
     public ServerConnection(ServerViewController controller, Socket socket, int remoteId,
@@ -120,30 +111,8 @@ public class ServerConnection {
                 logger.error("Error creating connection to "+remoteId,ex);
             }
         }
-               
-       //******* EDUARDO BEGIN **************//
-        this.useSenderThread = this.controller.getStaticConf().isUseSenderThread();
-
-        if (useSenderThread && (this.controller.getStaticConf().getTTPId() != remoteId)) {
-            new SenderThread().start();
-        } else {
-            sendLock = new ReentrantLock();
-        }
-        authenticateAndEstablishAuthKey();
         
-        if (!this.controller.getStaticConf().isTheTTP()) {
-            if (this.controller.getStaticConf().getTTPId() == remoteId) {
-                //Uma thread "diferente" para as msgs recebidas da TTP
-                new TTPReceiverThread(replica).start();
-            } else {
-                new ReceiverThread().start();
-            }
-        }
         //******* EDUARDO END **************//
-    }
-
-    public SecretKey getSecretKey() {
-        return authKey;
     }
     
     /**
@@ -159,13 +128,6 @@ public class ServerConnection {
     //******* EDUARDO BEGIN **************//
     //return true of a process shall connect to the remote process, false otherwise
     private boolean isToConnect() {
-        if (this.controller.getStaticConf().getTTPId() == remoteId) {
-            //Need to wait for the connection request from the TTP, do not tray to connect to it
-            return false;
-        } else if (this.controller.getStaticConf().getTTPId() == this.controller.getStaticConf().getProcessId()) {
-            //If this is a TTP, one must connect to the remote process
-            return true;
-        }
         boolean ret = false;
         if (this.controller.isInCurrentView()) {
             
@@ -244,9 +206,7 @@ public class ServerConnection {
                 try {
                     socketOutStream = new DataOutputStream(socket.getOutputStream());
                     socketInStream = new DataInputStream(socket.getInputStream());
-                    
-                    authKey = null;
-                    authenticateAndEstablishAuthKey();
+
                 } catch (IOException ex) {
                     logger.error("Failed to authenticate to replica",ex);
                 }
