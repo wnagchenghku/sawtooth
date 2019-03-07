@@ -28,6 +28,7 @@ public class TOMConfiguration extends Configuration {
 
     protected int n;
     protected int f;
+    private int[] initialView;
     private String bindAddress;
     
     /** Creates a new instance of TOMConfiguration */
@@ -70,27 +71,22 @@ public class TOMConfiguration extends Configuration {
                 useSignatures = Integer.parseInt(s);
             }
 
-            s = (String) configs.remove("system.communication.inQueueSize");
+            s = (String) configs.remove("system.initial.view");
             if (s == null) {
-                inQueueSize = 1000;
-            } else {
-
-                inQueueSize = Integer.parseInt(s);
-                if (inQueueSize < 1) {
-                    inQueueSize = 1000;
+                initialView = new int[n];
+                for (int i = 0; i < n; i++) {
+                    initialView[i] = i;
                 }
-
+            } else {
+                StringTokenizer str = new StringTokenizer(s, ",");
+                initialView = new int[str.countTokens()];
+                for (int i = 0; i < initialView.length; i++) {
+                    initialView[i] = Integer.parseInt(str.nextToken());
+                }
             }
 
             s = (String) configs.remove("system.bft");
             isBFT = (s != null) ? Boolean.parseBoolean(s) : true;
-
-            s = (String) configs.remove("system.numrepliers");
-            if (s == null) {
-                numRepliers = 0;
-            } else {
-                numRepliers = Integer.parseInt(s);
-            }
             
             s = (String) configs.remove("system.communication.bindaddress");
             
@@ -121,6 +117,10 @@ public class TOMConfiguration extends Configuration {
 
     public int getF() {
         return f;
+    }
+
+    public final int[] getInitialView() {
+        return this.initialView;
     }
 
     public boolean isBFT(){

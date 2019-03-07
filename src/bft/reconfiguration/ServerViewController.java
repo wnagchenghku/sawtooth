@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package bftsmart.reconfiguration;
+package bft.reconfiguration;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import bft.reconfiguration.views.View;
 import java.security.Provider;
 
 import org.slf4j.Logger;
@@ -36,13 +37,16 @@ public class ServerViewController extends ViewController {
     
    // protected View initialView;
     
-    public ServerViewController(int procId, KeyLoader loader) {
-        this(procId,"", loader);
+    public ServerViewController(int procId) {
+        this(procId,"");
     }
 
-    public ServerViewController(int procId, String configHome, KeyLoader loader) {
-        super(procId, configHome, loader);
-       
+    public ServerViewController(int procId, String configHome) {
+        super(procId, configHome);
+        
+        logger.info("Creating current view from configuration file");
+        reconfigureTo(new View(getStaticConf().getInitialView()));
+
     }
 
     private InetSocketAddress[] getInitAdddresses() {
@@ -56,8 +60,17 @@ public class ServerViewController extends ViewController {
         return addresses;
     }
 
-    
     public boolean isInCurrentView() {
         return this.currentView.isMember(getStaticConf().getProcessId());
     }
+
+    public int[] getCurrentViewAcceptors() {
+        return this.currentView.getProcesses();
+    }
+
+    @Override
+    public final void reconfigureTo(View newView) {
+        this.currentView = newView;
+    }
+
 }

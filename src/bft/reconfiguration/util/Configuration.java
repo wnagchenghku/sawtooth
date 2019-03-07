@@ -47,6 +47,14 @@ public class Configuration {
         }
     }
 
+    public final InetSocketAddress getRemoteAddress(int id){
+        return hosts.getRemoteAddress(id);
+    }
+
+    public final int getProcessId(){
+        return processId;
+    }
+
     private void loadConfig(){
         configs = new HashMap<>();
         try{

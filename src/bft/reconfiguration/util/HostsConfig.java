@@ -65,6 +65,22 @@ public class HostsConfig {
         }
     }
 
+    public InetSocketAddress getRemoteAddress(int id){
+        Config c = (Config) this.servers.get(id);
+        if(c != null){
+            return new InetSocketAddress(c.host,c.port);
+        }
+        return null;
+    }
+
+    public int getPort(int id){
+        Config c = (Config) this.servers.get(id);
+        if(c != null){
+            return c.port;
+        }
+        return -1;
+    }
+
     public class Config{
         public int id;
         public String host;
