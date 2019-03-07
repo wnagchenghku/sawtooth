@@ -25,11 +25,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 public class Configuration {
+    
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	protected int processId;
 	protected Map<String, String> configs;
 	protected HostsConfig hosts;
+    protected int multicastPort;
 
     protected String configHome = "";
 
@@ -53,9 +59,22 @@ public class Configuration {
             
             loadConfig();
 
-        } catch(Exception e){
+            String s = (String) configs.remove("system.multicast.port");
+            if(s == null){
+                multicastPort = 5000;
+            }else{
+                multicastPort = Integer.parseInt(s);
+            }
+
+        }catch(Exception e){
+            LoggerFactory.getLogger(this.getClass()).error("Wrong system.config file format.");
         }
     }
+
+    public final int getMulticastPort() {
+        return multicastPort;
+    }
+    
 
     public final InetSocketAddress getRemoteAddress(int id){
         return hosts.getRemoteAddress(id);

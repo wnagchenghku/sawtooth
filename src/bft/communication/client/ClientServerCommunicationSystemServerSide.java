@@ -79,40 +79,11 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
              .channel(NioDatagramChannel.class)
              .option(ChannelOption.SO_BROADCAST, true);
 
-                        String myAddress;
-                        String confAddress =
-                                    controller.getStaticConf().getRemoteAddress(controller.getStaticConf().getProcessId()).getAddress().getHostAddress();
-                        
-                        if (InetAddress.getLoopbackAddress().getHostAddress().equals(confAddress)) {
-                            
-                            myAddress = InetAddress.getLoopbackAddress().getHostAddress();
-                            
-                        }
-                        
-                        else if (controller.getStaticConf().getBindAddress().equals("")) {
-                            
-                            myAddress = InetAddress.getLocalHost().getHostAddress();
-                              
-                            //If Netty binds to the loopback address, clients will not be able to connect to replicas.
-                            //To solve that issue, we bind to the address supplied in config/hosts.config instead.
-                            if (InetAddress.getLoopbackAddress().getHostAddress().equals(myAddress) && !myAddress.equals(confAddress)) {
-                                
-                                myAddress = confAddress;
-                            }
-                            
-                            
-                        } else {
-                            
-                            myAddress = controller.getStaticConf().getBindAddress();
-                        }
-                        
-                        int myPort = controller.getStaticConf().getPort(controller.getStaticConf().getProcessId());
-
-			ChannelFuture f = b.bind(new InetSocketAddress(myAddress, myPort)).sync();
+			ChannelFuture f = b.bind(controller.getStaticConf().getMulticastPort()).sync();
                         
                         mainChannel = f.channel();
 
-		} catch (InterruptedException | UnknownHostException ex) {
+		} catch (InterruptedException ex) {
 			logger.error("Failed to create Netty communication system",ex);
 		}
 	}
