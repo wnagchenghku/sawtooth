@@ -65,15 +65,10 @@ public class ServerConnection {
     private DataOutputStream socketOutStream = null;
     private DataInputStream socketInStream = null;
     private int remoteId;
-    protected LinkedBlockingQueue<byte[]> outQueue;// = new LinkedBlockingQueue<byte[]>(SEND_QUEUE_SIZE);
-    private HashSet<Integer> noMACs = null; // this is used to keep track of data to be sent without a MAC.
-                                            // It uses the reference id for that same data
-    private LinkedBlockingQueue<SystemMessage> inQueue;
     private Lock connectLock = new ReentrantLock();
     private boolean doWork = true;
 
-    public ServerConnection(ServerViewController controller, Socket socket, int remoteId,
-            LinkedBlockingQueue<SystemMessage> inQueue, ServiceReplica replica) {
+    public ServerConnection(ServerViewController controller, Socket socket, int remoteId, ServiceReplica replica) {
 
         this.controller = controller;
 
@@ -81,11 +76,6 @@ public class ServerConnection {
 
         this.remoteId = remoteId;
 
-        this.inQueue = inQueue;
-
-        this.outQueue = new LinkedBlockingQueue<byte[]>(this.controller.getStaticConf().getOutQueueSize());
-
-        this.noMACs = new HashSet<Integer>();
         // Connect to the remote process or just wait for the connection?
         if (isToConnect()) {
             //I have to connect to the remote server
@@ -244,8 +234,7 @@ public class ServerConnection {
                 Thread.sleep(POOL_TIME);
             } catch (InterruptedException ie) {
             }
-
-            outQueue.clear();
+            
             reconnect(null);
         }
     }

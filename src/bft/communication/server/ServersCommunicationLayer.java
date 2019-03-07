@@ -51,7 +51,6 @@ public class ServersCommunicationLayer extends Thread {
 
 
     private ServerViewController controller;
-    private LinkedBlockingQueue<SystemMessage> inQueue;
     private HashMap<Integer, ServerConnection> connections = new HashMap<>();
     private ServerSocket serverSocket;
     private int me;
@@ -61,11 +60,9 @@ public class ServersCommunicationLayer extends Thread {
     private List<PendingConnection> pendingConn = new LinkedList<PendingConnection>();
     private ServiceReplica replica;
 
-    public ServersCommunicationLayer(ServerViewController controller,
-            LinkedBlockingQueue<SystemMessage> inQueue, ServiceReplica replica) throws Exception {
+    public ServersCommunicationLayer(ServerViewController controller, ServiceReplica replica) throws Exception {
 
         this.controller = controller;
-        this.inQueue = inQueue;
         this.me = controller.getStaticConf().getProcessId();
         this.replica = replica;
 
@@ -166,7 +163,7 @@ public class ServersCommunicationLayer extends Thread {
             if (this.connections.get(remoteId) == null) { //This must never happen!!!
                 //first time that this connection is being established
                 //System.out.println("THIS DOES NOT HAPPEN....."+remoteId);
-                this.connections.put(remoteId, new ServerConnection(controller, newSocket, remoteId, inQueue, replica));
+                this.connections.put(remoteId, new ServerConnection(controller, newSocket, remoteId, replica));
             } else {
                 //reconnection
                 this.connections.get(remoteId).reconnect(newSocket);

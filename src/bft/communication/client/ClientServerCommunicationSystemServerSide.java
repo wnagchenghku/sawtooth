@@ -60,7 +60,6 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private HashMap sessionTable;
-    private ReentrantReadWriteLock rl;
     private ServerViewController controller;
     private boolean closed = false;
     private Channel mainChannel;
@@ -70,7 +69,6 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
 
 			this.controller = controller;
 			sessionTable = new HashMap();
-			rl = new ReentrantReadWriteLock();
 
             EventLoopGroup group = new NioEventLoopGroup();
             

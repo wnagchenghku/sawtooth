@@ -38,8 +38,6 @@ public class ServerCommunicationSystem extends Thread {
 
     private boolean doWork = true;
     public final long MESSAGE_WAIT_TIME = 100;
-    private LinkedBlockingQueue<SystemMessage> inQueue = null;//new LinkedBlockingQueue<SystemMessage>(IN_QUEUE_SIZE);
-    protected MessageHandler messageHandler;
     private ServersCommunicationLayer serversConn;
     private CommunicationSystemServerSide clientsConn;
     private ServerViewController controller;
@@ -51,10 +49,6 @@ public class ServerCommunicationSystem extends Thread {
         super("Server CS");
 
         this.controller = controller;
-        
-        messageHandler = new MessageHandler();
-
-        inQueue = new LinkedBlockingQueue<SystemMessage>(controller.getStaticConf().getInQueueSize());
 
         //create a new conf, with updated port number for servers
         //TOMConfiguration serversConf = new TOMConfiguration(conf.getProcessId(),
@@ -62,7 +56,7 @@ public class ServerCommunicationSystem extends Thread {
 
         //serversConf.increasePortNumber();
 
-        serversConn = new ServersCommunicationLayer(controller, inQueue, replica);
+        serversConn = new ServersCommunicationLayer(controller, replica);
 
         //******* EDUARDO BEGIN **************//
        // if (manager.isInCurrentView() || manager.isInInitView()) {
