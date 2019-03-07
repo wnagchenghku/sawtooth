@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 import bft.communication.client.CommunicationSystemServerSide;
 import bft.communication.client.CommunicationSystemServerSideFactory;
 import bft.communication.server.ServersCommunicationLayer;
-import bftsmart.reconfiguration.ServerViewController;
-import bftsmart.tom.ServiceReplica;
+import bft.reconfiguration.ServerViewController;
+import bft.tom.ServiceReplica;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
