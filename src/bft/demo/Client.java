@@ -23,16 +23,18 @@ import java.io.InterruptedIOException;
 
 public class Client {
 
+    private static final int PORT = 7686;
+
 	public static void main(String[] args) throws IOException {
 
-        if (args.length != 3) { // Test for correct # of args
-            throw new IllegalArgumentException("Parameter(s): <Server> <Port> <Data Size>");
+        if ((args.length < 2) || (args.length > 3)) { // Test for correct # of args
+            throw new IllegalArgumentException("Parameter(s): Parameter(s): <Server> <Data Size> [<Port>] ");
         }
         InetAddress serverAddress = InetAddress.getByName(args[0]);  // Server address
 
-        int servPort = Integer.parseInt(args[1]);
+        int servPort = (args.length == 3) ? Integer.parseInt(args[2]) : PORT;
 
-        byte[] bytesToSend = new byte[Integer.parseInt(args[2])];
+        byte[] bytesToSend = new byte[Integer.parseInt(args[1])];
 
         DatagramSocket socket = new DatagramSocket();
 

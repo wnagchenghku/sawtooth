@@ -29,7 +29,7 @@ import io.netty.util.internal.SocketUtils;
 import java.net.InetSocketAddress;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.buffer.CompositeByteBuf;
+import io.netty.channel.ChannelOption;
 import io.netty.buffer.ByteBuf;
 
 import java.io.BufferedReader;
@@ -40,10 +40,9 @@ import java.util.StringTokenizer;
 
 public final class Sequencer {
 
-	private InetSocketAddress multicast;
     private Map<String, String> configs;
-    private ByteBuf sequenceBuf;
     private int sequnceNum;
+    static final int PORT =7686;
 
     private String configHome = "";
 
@@ -52,21 +51,19 @@ public final class Sequencer {
     }
 
     public void go() {
-        sequenceBuf = Unpooled.buffer();
         sequnceNum = 0;
 
         loadConfig();
-        String s  = configs.remove("system.multicast");
-        multicast = SocketUtils.socketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1]));
 
         EventLoopGroup group = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
             b.group(group)
              .channel(NioDatagramChannel.class)
+             .option(ChannelOption.SO_BROADCAST, true)
              .handler(new SequencerHandler());
 
-            ChannelFuture f = b.bind(Integer.valueOf(configs.remove("system.sequencer").split(":")[1])).sync();
+            ChannelFuture f = b.bind(PORT).sync();
 
             f.channel().closeFuture().await();
         } catch (InterruptedException ex) {
@@ -80,7 +77,7 @@ public final class Sequencer {
         try{
             if(configHome == null || configHome.equals("")){
                 configHome="config";
-            }
+            } 
             String sep = System.getProperty("file.separator");
             String path =  configHome+sep+"system.config";;
             FileReader fr = new FileReader(path);
@@ -103,10 +100,9 @@ public final class Sequencer {
     private class SequencerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         @Override
         public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
-            sequenceBuf.retain();
             packet.retain();
-            sequenceBuf.setInt(0, sequnceNum++);
-            ctx.writeAndFlush(new DatagramPacket(Unpooled.compositeBuffer().addComponents(true, sequenceBuf, packet.content()), multicast));
+            packet.content().setInt(0, sequnceNum++);
+            ctx.writeAndFlush(new DatagramPacket(packet.content(), SocketUtils.socketAddress("255.255.255.255", Integer.valueOf(configs.remove("system.multicast.port"))))).sync();
         }
     }
 
