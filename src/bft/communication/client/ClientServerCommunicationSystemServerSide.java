@@ -15,17 +15,19 @@ limitations under the License.
  */
 package bft.communication.client;
 
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.DatagramPacket;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -75,8 +77,7 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
             Bootstrap b = new Bootstrap();
             b.group(group)
              .channel(NioDatagramChannel.class)
-             .option(ChannelOption.SO_BROADCAST, true)
-             .handler(new ServerHandler());
+             .option(ChannelOption.SO_BROADCAST, true);
 
                         String myAddress;
                         String confAddress =

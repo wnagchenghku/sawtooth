@@ -17,6 +17,10 @@ package bft.reconfiguration.util;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -36,6 +40,12 @@ public class Configuration {
         processId = procId;
         init();
     }
+    
+    public Configuration(int procId, String configHomeParam){
+        processId = procId;
+        configHome = configHomeParam;
+        init();
+    }
 
     protected void init(){
         try{
@@ -49,6 +59,18 @@ public class Configuration {
 
     public final InetSocketAddress getRemoteAddress(int id){
         return hosts.getRemoteAddress(id);
+    }
+
+    public final String getHost(int id){
+        return hosts.getHost(id);
+    }
+
+    public final int getPort(int id){
+        return hosts.getPort(id);
+    }
+    
+     public final int getServerToServerPort(int id){
+        return hosts.getServerToServerPort(id);
     }
 
     public final int getProcessId(){

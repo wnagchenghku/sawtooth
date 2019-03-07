@@ -17,8 +17,12 @@ package bft.reconfiguration.util;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.StringTokenizer;
+import org.slf4j.LoggerFactory;
 
 public class HostsConfig {
     
@@ -73,10 +77,26 @@ public class HostsConfig {
         return null;
     }
 
+    public String getHost(int id){
+        Config c = (Config) this.servers.get(id);
+        if(c != null){
+            return c.host;
+        }
+        return null;
+    }
+
     public int getPort(int id){
         Config c = (Config) this.servers.get(id);
         if(c != null){
             return c.port;
+        }
+        return -1;
+    }
+
+     public int getServerToServerPort(int id){
+        Config c = (Config) this.servers.get(id);
+        if(c != null){
+            return c.port+1;
         }
         return -1;
     }

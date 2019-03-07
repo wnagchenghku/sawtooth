@@ -28,6 +28,7 @@ public class TOMConfiguration extends Configuration {
 
     protected int n;
     protected int f;
+    private boolean isBFT;
     private int[] initialView;
     private String bindAddress;
     
@@ -52,23 +53,6 @@ public class TOMConfiguration extends Configuration {
                 f = (int) Math.ceil((n - 1) / 3);
             } else {
                 f = Integer.parseInt(s);
-            }
-
-            s = (String) configs.remove("system.shutdownhook");
-            shutdownHookEnabled = (s != null) ? Boolean.parseBoolean(s) : false;
-
-            s = (String) configs.remove("system.communication.useMACs");
-            if (s == null) {
-                useMACs = 0;
-            } else {
-                useMACs = Integer.parseInt(s);
-            }
-
-            s = (String) configs.remove("system.communication.useSignatures");
-            if (s == null) {
-                useSignatures = 0;
-            } else {
-                useSignatures = Integer.parseInt(s);
             }
 
             s = (String) configs.remove("system.initial.view");
@@ -96,13 +80,6 @@ public class TOMConfiguration extends Configuration {
                 bindAddress = "";
             } else {
                 bindAddress = s;
-            }
-            
-            s = (String) configs.remove("system.samebatchsize");
-            if (s != null) {
-                    sameBatchSize = Boolean.parseBoolean(s);
-            } else {
-                    sameBatchSize = false;
             }
             
         } catch (Exception e) {

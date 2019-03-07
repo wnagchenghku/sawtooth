@@ -34,7 +34,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import bft.communication.SystemMessage;
 import bft.reconfiguration.ServerViewController;
 import bft.tom.ServiceReplica;
 import java.math.BigInteger;

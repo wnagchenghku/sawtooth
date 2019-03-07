@@ -116,6 +116,17 @@ public class ServersCommunicationLayer extends Thread {
         start();
     }
 
+    private ServerConnection getConnection(int remoteId) {
+        connectionsLock.lock();
+        ServerConnection ret = this.connections.get(remoteId);
+        if (ret == null) {
+            ret = new ServerConnection(controller, null, remoteId, this.replica);
+            this.connections.put(remoteId, ret);
+        }
+        connectionsLock.unlock();
+        return ret;
+    }
+
     @Override
     public void run() {
         while (doWork) {

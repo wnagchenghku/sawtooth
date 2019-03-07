@@ -13,22 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package bft.demo;
+package bft.communication.client;
 
-import bft.tom.ServiceReplica;
-import java.io.IOException;
-
-public final class Server {
-
-    public Server(int id) {
-        new ServiceReplica(id);
-    }
-
-    public static void main(String[] args){
-        if(args.length < 1) {
-            System.out.println("Use: java Server <processId>");
-            System.exit(-1);
-        }
-        new Server(Integer.parseInt(args[0]));
-    }
+/**
+ * Methods that should be implemented by the server side of the client-server communication system
+ *
+ * @author Paulo
+ */
+public interface CommunicationSystemServerSide {
 }

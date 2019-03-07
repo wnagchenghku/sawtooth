@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-import bftsmart.communication.server.ServerConnection;
+import bft.communication.server.ServerConnection;
 import java.security.Provider;
 
 import org.slf4j.Logger;
@@ -84,9 +84,5 @@ public class ViewManager {
             logger.error("Could not load ID", e);
             return -1;
         }
-    }
-
-    private ServerConnection getConnection(int remoteId) {
-         return new ServerConnection(controller, null, remoteId, null, null);
     }
 }

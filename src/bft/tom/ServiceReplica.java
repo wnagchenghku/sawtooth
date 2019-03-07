@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 public class ServiceReplica {
     
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    
     // replica ID
     private int id;	
     // Server side comunication system
@@ -43,7 +45,7 @@ public class ServiceReplica {
      * @param id Replica ID
      */
     public ServiceReplica(int id) {
-        this(id, "", null);
+        this(id, "");
     }
 
     /**

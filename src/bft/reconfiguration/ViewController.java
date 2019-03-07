@@ -18,6 +18,7 @@ package bft.reconfiguration;
 import java.net.SocketAddress;
 
 import bft.reconfiguration.util.TOMConfiguration;
+import bft.reconfiguration.views.View;
 import java.security.Provider;
 
 /**
@@ -26,6 +27,7 @@ import java.security.Provider;
  */
 public class ViewController {
 
+    protected View currentView = null;
     private TOMConfiguration staticConf;
 
     public ViewController(int procId) {
@@ -37,7 +39,19 @@ public class ViewController {
         this.staticConf = new TOMConfiguration(procId, configHome);
     }
 
+    public View getCurrentView(){
+        return this.currentView;
+    }
+
+    public void reconfigureTo(View newView) {
+        this.currentView = newView;
+    }
+
     public TOMConfiguration getStaticConf() {
         return staticConf;
+    }
+
+    public boolean isCurrentViewMember(int id) {
+        return getCurrentView().isMember(id);
     }
 }
