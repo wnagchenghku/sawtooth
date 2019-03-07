@@ -15,96 +15,31 @@ limitations under the License.
 */
 package bft.demo;
 
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.io.IOException;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.DatagramPacket;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.buffer.Unpooled;
-import io.netty.util.internal.SocketUtils;
-import java.net.InetSocketAddress;
-import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.buffer.ByteBuf;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.io.InterruptedIOException;
 
 public class Client {
-    
-    static int numberOfOps = 1000;
-    static int dataSize = 100;
 
-    private Map<String, String> configs;
-    private String configHome = "";
+	public static void main(String[] args) throws IOException {
 
-	public static void main(String[] args) {
-        new Client().go();
-    }
-
-    public void go() {
-		
-        loadConfig();
-
-        byte[] data = new byte[dataSize];
-        String s  = configs.remove("system.sequencer");
-        InetSocketAddress sequencer = SocketUtils.socketAddress(s.split(":")[0], Integer.valueOf(s.split(":")[1]));     
-
-		try {
-			EventLoopGroup group = new NioEventLoopGroup();
-			Bootstrap b = new Bootstrap();
-			b.group(group)
-             .channel(NioDatagramChannel.class)
-             .handler(new ClientHandler());
-
-
-			Channel ch = b.bind(0).sync().channel();
-
-            ByteBuf buf = Unpooled.copiedBuffer(data);
-			for (int i = 0; i < numberOfOps; i++) {
-                buf.retain();
-				ch.writeAndFlush(new DatagramPacket(buf, sequencer)).sync();
-			}
-		} catch(InterruptedException ex) {
-			
-		}
-	}
-
-    private class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
-        @Override
-        public void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
+        if (args.length != 3) { // Test for correct # of args
+            throw new IllegalArgumentException("Parameter(s): <Server> <Port> <Data Size>");
         }
-    }
+        InetAddress serverAddress = InetAddress.getByName(args[0]);  // Server address
 
-    private void loadConfig(){
-        configs = new HashMap<>();
-        try{
-            if(configHome == null || configHome.equals("")){
-                configHome="config";
-            }
-            String sep = System.getProperty("file.separator");
-            String path =  configHome+sep+"system.config";;
-            FileReader fr = new FileReader(path);
-            BufferedReader rd = new BufferedReader(fr);
-            String line = null;
-            while((line = rd.readLine()) != null){
-                if(!line.startsWith("#")){
-                    StringTokenizer str = new StringTokenizer(line,"=");
-                    if(str.countTokens() > 1){
-                        configs.put(str.nextToken().trim(),str.nextToken().trim());
-                    }
-                }
-            }
-            fr.close();
-            rd.close();
-        }catch(Exception e){
+        int servPort = Integer.parseInt(args[1]);
+
+        byte[] bytesToSend = new byte[Integer.parseInt(args[2])];
+
+        DatagramSocket socket = new DatagramSocket();
+
+        DatagramPacket sendPacket = new DatagramPacket(bytesToSend, bytesToSend.length, serverAddress, servPort);
+
+        for (; ; ) {
+            socket.send(sendPacket);
         }
     }
 
