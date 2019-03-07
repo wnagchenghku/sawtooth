@@ -15,7 +15,7 @@ limitations under the License.
 */
 package bft.communication.client;
 
-import bft.communication.client.ClientServerCommunicationSystemServerSide;
+import bft.communication.client.netty.NettyClientServerCommunicationSystemServerSide;
 import bft.reconfiguration.ServerViewController;
 
 /**

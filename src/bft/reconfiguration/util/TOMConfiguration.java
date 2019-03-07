@@ -28,6 +28,7 @@ public class TOMConfiguration extends Configuration {
 
     protected int n;
     protected int f;
+    private int useMACs;
     private boolean isBFT;
     private int[] initialView;
     private String bindAddress;
@@ -53,6 +54,13 @@ public class TOMConfiguration extends Configuration {
                 f = (int) Math.ceil((n - 1) / 3);
             } else {
                 f = Integer.parseInt(s);
+            }
+
+            s = (String) configs.remove("system.communication.useMACs");
+            if (s == null) {
+                useMACs = 0;
+            } else {
+                useMACs = Integer.parseInt(s);
             }
 
             s = (String) configs.remove("system.initial.view");
@@ -86,6 +94,13 @@ public class TOMConfiguration extends Configuration {
             logger.error("Could not parse system configuration file",e);
         }
 
+    }
+
+    /**
+     * Indicates if MACs should be used (1) or not (0) to authenticate client-server and server-server messages
+     */
+    public int getUseMACs() {
+        return useMACs;
     }
 
     public int getN() {

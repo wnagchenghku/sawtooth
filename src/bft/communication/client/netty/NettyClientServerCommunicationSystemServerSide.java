@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-package bft.communication.client;
+package bft.communication.client.netty;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -57,29 +57,40 @@ import java.util.logging.Level;
  * @author Paulo
  */
 @Sharable
-public class ClientServerCommunicationSystemServerSide extends SimpleChannelInboundHandler<DatagramPacket> implements CommunicationSystemServerSide {
+public class NettyClientServerCommunicationSystemServerSide extends SimpleChannelInboundHandler<DatagramPacket> implements CommunicationSystemServerSide {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private HashMap sessionTable;
+    private ReentrantReadWriteLock rl;
     private ServerViewController controller;
     private boolean closed = false;
     private Channel mainChannel;
+
+    // This locked seems to introduce a bottleneck and seems useless, but I cannot recall why I added it
+    //private ReentrantLock sendLock = new ReentrantLock();
+    private NettyServerPipelineFactory serverPipelineFactory;
         
-	public ClientServerCommunicationSystemServerSide(ServerViewController controller) {
+	public NettyClientServerCommunicationSystemServerSide(ServerViewController controller) {
 		try {
 
 			this.controller = controller;
 			sessionTable = new HashMap();
+            rl = new ReentrantReadWriteLock();
+
+            serverPipelineFactory = new NettyServerPipelineFactory(this, sessionTable, controller, rl);
 
             EventLoopGroup group = new NioEventLoopGroup();
             
             Bootstrap b = new Bootstrap();
             b.group(group)
              .channel(NioDatagramChannel.class)
-             .option(ChannelOption.SO_BROADCAST, true);
+             .option(ChannelOption.SO_BROADCAST, true)
+             .handler(serverPipelineFactory.getDecoder());
 
 			ChannelFuture f = b.bind(controller.getStaticConf().getMulticastPort()).sync();
+
+            logger.info("ID = " + controller.getStaticConf().getProcessId());
                         
                         mainChannel = f.channel();
 
@@ -88,8 +99,8 @@ public class ClientServerCommunicationSystemServerSide extends SimpleChannelInbo
 		}
 	}
 
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
     }
-
 }
