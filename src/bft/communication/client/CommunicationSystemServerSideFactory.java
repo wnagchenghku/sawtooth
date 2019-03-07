@@ -13,24 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package bft.demo;
+package bft.communication.client;
 
-import java.io.IOException;
+import bft.communication.client.netty.ClientServerCommunicationSystemServerSide;
+import bft.reconfiguration.ServerViewController;
 
-public final class Server {
+/**
+ *
+ * @author Paulo
+ */
+public class CommunicationSystemServerSideFactory {
 
-    public Server(int id) {
-        new ServiceReplica(id, this, this);
-    }
-
-    protected Map<String, String> configs;
-    private String configHome = "";
-
-    public static void main(String[] args){
-        if(args.length < 1) {
-            System.out.println("Use: java Server <processId>");
-            System.exit(-1);
-        }
-        new Server(Integer.parseInt(args[0])).go();
+    public static CommunicationSystemServerSide getCommunicationSystemServerSide(ServerViewController controller) {
+        return new ClientServerCommunicationSystemServerSide(controller);
     }
 }
