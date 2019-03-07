@@ -68,6 +68,7 @@ public class ServiceReplica {
             logger.error("Failed to initialize replica-to-replica communication system", ex);
             throw new RuntimeException("Unable to build a communication system.");
         }
+
         initReplica();
     }
 

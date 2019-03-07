@@ -91,7 +91,8 @@ public class NettyClientServerCommunicationSystemServerSide extends SimpleChanne
 			ChannelFuture f = b.bind(controller.getStaticConf().getMulticastPort()).sync();
 
             logger.info("ID = " + controller.getStaticConf().getProcessId());
-                        
+            if (controller.getStaticConf().getUseMACs() == 1) logger.info("Using MACs");
+            
                         mainChannel = f.channel();
 
 		} catch (InterruptedException ex) {
