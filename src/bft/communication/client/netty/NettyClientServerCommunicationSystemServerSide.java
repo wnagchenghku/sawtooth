@@ -88,7 +88,8 @@ public class NettyClientServerCommunicationSystemServerSide extends SimpleChanne
              .option(ChannelOption.SO_BROADCAST, true)
              .handler(serverPipelineFactory.getDecoder());
 
-			ChannelFuture f = b.bind(controller.getStaticConf().getMulticastPort()).sync();
+			// ChannelFuture f = b.bind(controller.getStaticConf().getMulticastPort()).sync();
+            ChannelFuture f = b.bind(0).sync();
 
             logger.info("ID = " + controller.getStaticConf().getProcessId());
             if (controller.getStaticConf().getUseMACs() == 1) logger.info("Using MACs");
